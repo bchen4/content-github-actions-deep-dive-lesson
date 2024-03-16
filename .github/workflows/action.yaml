@@ -40,5 +40,23 @@ jobs:
           aws-region: us-east-1
       - name: upload to s3
         run: aws s3 cp ${{ github.sha }}.zip s3://my-action-container-bucket-fhquf9q8f/${{ github.sha }}.zip 
-          
+  deploy:
+    runs-on: ubuntu-18.04
+    needs: upload
+    steps:
+      - name: download artifact
+        uses: actions/download-artifact@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: update function code
+        run: |
+          aws lambda update-function-code \
+            --function-name my-action-function \
+            --s3-bucket my-action-container-bucket-fhquf9q8f \
+            --s3-key ${{ github.sha }}.zip \
+            --publish
+            
+            
           
